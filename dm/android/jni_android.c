@@ -161,6 +161,13 @@ static void load_env_file(const char *dir) {
 // game data comes from the variant, the touch art exists only in overlay and is found as usual. Everything off, no variants directory, no matching
 // combination or a bad manifest: return 0 and use overlay. Takes effect after a restart (as on iOS)
 int dm_custom_get(const char *key); void dm_custom_init(const char *dir);
+// 엽굵 모드판: 앱 시작 때 고른 모드(DM_YG)로 yupgoolg 변체를 켜고, 그때는 item_notes 변체를 끈다(같은 문자열 파일을 고치므로)
+static int yg_key_on(const char *k) {
+    int yg = getenv("DM_YG") != NULL;
+    if (!strcmp(k, "yupgoolg")) return yg;
+    if (yg && !strcmp(k, "item_notes")) return 0;
+    return dm_custom_get(k) != 0;
+}
 static int overlay_variant(const char *overlay, char *out, size_t n) {
     char vdir[1300]; snprintf(vdir, sizeof vdir, "%s_variants", overlay);
     DIR *d = opendir(vdir); if (!d) return 0;
@@ -178,10 +185,10 @@ static int overlay_variant(const char *overlay, char *out, size_t n) {
     for (int i = 0; i < nv; i++) { char t[64], *sp = NULL; strlcpy(t, names[i], sizeof t);
         for (char *k = strtok_r(t, "+", &sp); k; k = strtok_r(NULL, "+", &sp)) {
             int seen = 0; for (int j = 0; j < nk; j++) seen |= !strcmp(keys[j], k);
-            if (!seen && nk < 16) { strlcpy(keys[nk++], k, sizeof keys[0]); on += dm_custom_get(k) != 0; } } }
+            if (!seen && nk < 16) { strlcpy(keys[nk++], k, sizeof keys[0]); on += yg_key_on(k); } } }
     if (!on) { LOG("boot: 覆盖层变体 %d 份，开关都关着，用 overlay", nv); return 0; }
     for (int i = 0; i < nv; i++) { char t[64], *sp = NULL; int cnt = 0, all = 1; strlcpy(t, names[i], sizeof t);
-        for (char *k = strtok_r(t, "+", &sp); k; k = strtok_r(NULL, "+", &sp)) { cnt++; all &= dm_custom_get(k) != 0; }
+        for (char *k = strtok_r(t, "+", &sp); k; k = strtok_r(NULL, "+", &sp)) { cnt++; all &= yg_key_on(k); }
         if (!all || cnt != on) continue;
         char path[1400], reason[256]; snprintf(path, sizeof path, "%s/%s", vdir, names[i]);
         dm_overlay_result r = dm_overlay_validate(path, DM_OVERLAY_SOURCE_SHA256, reason, sizeof reason);

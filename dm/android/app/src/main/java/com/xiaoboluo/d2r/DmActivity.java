@@ -328,12 +328,37 @@ public class DmActivity extends Activity implements SurfaceHolder.Callback, Disp
         }
     }
 
+    // 엽굵 모드판: 시작할 때 일반 / 엽굵 모드를 고른다. 엽굵 모드는 yupgoolg 덮어쓰기 묶음과 전용 세이브 폴더(save_yg)를 쓴다.
+    private int ygMode = -1;
+    private boolean ygAsking;
+    private void askYgMode() {
+        if (ygAsking) return;
+        ygAsking = true;
+        new AlertDialog.Builder(this).setTitle("디아2 엽굵").setCancelable(false)
+            .setItems(new String[]{"일반 플레이", "엽굵 모드로 플레이"}, (d, which) -> {
+                ygAsking = false;
+                try {
+                    if (which == 1) {
+                        File save = new File(getFilesDir(), "save_yg");
+                        save.mkdirs();
+                        Os.setenv("DM_YG", "1", true);
+                        Os.setenv("DM_SAVE", save.getAbsolutePath(), true);
+                    } else {
+                        Os.unsetenv("DM_YG");
+                    }
+                } catch (ErrnoException e) { showStartError(getString(R.string.dmAndroidStorage)); return; }
+                ygMode = which;
+                startHost();
+            }).show();
+    }
+
     private void startHost() {
         if (bootFailure != 0) { showBootFailure(); return; }
         if (started || importing || !resumed || !ensureFileAccess()) return;
         File downloads = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
         if (!libraryLoaded && !savesTransferred) { savesTransferred = true; transferSaves(new File(downloads, "S2X/D2R Mobile")); }
         if (!libraryLoaded && !ensureImported(new File(downloads, "S2X/D2R Mobile/android"))) return;
+        if (!libraryLoaded && ygMode < 0) { askYgMode(); return; }
         if (gameFrame.getParent() == null) setContentView(gameFrame);
         if (!libraryLoaded) {
             // 与 jni_android.c 选运行目录同一条规则：内部目录有主程序就用内部目录，否则用外部私有目录
