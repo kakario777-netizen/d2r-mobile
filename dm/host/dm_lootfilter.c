@@ -70,6 +70,9 @@ static void write_fltr(const char *dir, const char *name, int heavy, int ammo) {
 void dm_lootfilter_seed(const char *save_dir) {
     char d[1100]; snprintf(d, sizeof d, "%s/Settings", save_dir); mkdir(d, 0755);
     write_fltr(d, "DmLite", 0, 1); write_fltr(d, "DmLiteBow", 0, 0); write_fltr(d, "DmHeavy", 1, 1); write_fltr(d, "DmHeavyBow", 1, 0);
+    // 엽굵 모드판: 엽굵 모드의 루트 필터(엽굵모드.fltr)를 DmYg 로 그대로 둔다. 엽굵 모드(DM_YG)일 때 난이도와 상관없이 이것을 쓴다
+    if (getenv("DM_YG")) { char p[1300]; snprintf(p, sizeof p, "%s/DmYg.fltr", d); FILE *f = fopen(p, "wb");
+        if (f) { fputs("{\"name\":\"DmYg\",\"rules\":[{\"name\":\"YG rule 0\",\"enabled\":true,\"ruleType\":\"hide\",\"filterEtherealSocketed\":true,\"equipmentRarity\":[\"lowQuality\",\"magic\",\"hiQuality\",\"normal\"],\"itemCategory\":[\"ammo\",\"keysr\"],\"itemCode\":[\"hp2\",\"gsw\",\"hp5\",\"gfv\",\"mp1\",\"gfw\",\"gfr\",\"skf\",\"gfy\",\"mp5\",\"vps\",\"isc\",\"gfb\",\"hp4\",\"gsv\",\"gcg\",\"mp2\",\"hp3\",\"gfg\",\"mp4\",\"gsb\",\"hp1\",\"gcb\",\"gcv\",\"tbk\",\"gsg\",\"mp3\",\"wms\",\"tsc\",\"gcy\",\"gsy\",\"ibk\",\"gsr\",\"sku\",\"gcw\",\"skc\",\"gcr\",\"yps\"],\"goldFilterValue\":4307},{\"name\":\"YG rule 1\",\"enabled\":true,\"ruleType\":\"show\",\"filterEtherealSocketed\":false,\"equipmentCategory\":[\"jewel\",\"rings\",\"charm\"]}]}", f); fclose(f); } else LOG("엽굵 필터：DmYg.fltr 못 씀 %s", p); }
 }
 __attribute__((constructor)) static void lootfilter_hook_install(void) { extern void (*g_dm_mount_seed_hook)(const char *); g_dm_mount_seed_hook = dm_lootfilter_seed; }
 static const char *want(int bow, int *why_diff) {   // 现在该用哪一份；"" = 不过滤 | which one should be in use now; "" = no filtering
@@ -77,6 +80,7 @@ static const char *want(int bow, int *why_diff) {   // 现在该用哪一份；"
     const char *e = getenv("DM_LOOTFILTER");
     if (e && !strcmp(e, "off")) lvl = 0; else if (e && !strcmp(e, "lite")) lvl = 1; else if (e && !strcmp(e, "heavy")) lvl = 2;
     else if (!dm_custom_get("loot_filter")) lvl = 0;
+    if (getenv("DM_YG") && !(e && *e) && dm_custom_get("loot_filter")) return "DmYg";   // 엽굵 모드판 | yupgoolg build
     return lvl == 0 ? "" : lvl == 1 ? (bow ? "DmLiteBow" : "DmLite") : (bow ? "DmHeavyBow" : "DmHeavy");
 }
 // 主线程每帧调（dm_potpick.c 的每帧入口带过来；pl = 客户端玩家，不在局内为 0）：每 30 帧核一次当前配置名
