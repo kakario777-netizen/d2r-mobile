@@ -455,6 +455,10 @@ JNIEXPORT void JNICALL Java_com_xiaoboluo_d2r_DmActivity_nativePadMode(JNIEnv *e
 
 // 键帽样式（0 Switch 手柄 / 1 键盘 / 2 Xbox / 3 PlayStation），按手柄厂商报
 // Key-cap style (0 Switch pad / 1 keyboard / 2 Xbox / 3 PlayStation), reported from the controller vendor
+// 엽굵 모드판: 게임 안(캐릭터가 맵에 있음)이면 1, 캐릭터 선택·메뉴 화면이면 0 → 업데이트 버튼 표시용
+int dm_uiscreen_ingame(void);
+JNIEXPORT jint JNICALL Java_com_xiaoboluo_d2r_DmActivity_nativeInGame(JNIEnv *env, jclass cls) { (void)env; (void)cls; return dm_uiscreen_ingame(); }
+
 JNIEXPORT void JNICALL Java_com_xiaoboluo_d2r_DmActivity_nativePadGlyph(JNIEnv *env, jclass cls, jint glyph) {
     (void)env; (void)cls;
     dm_padmode_request_glyph(glyph);

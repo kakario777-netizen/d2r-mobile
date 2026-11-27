@@ -81,6 +81,7 @@ public class DmActivity extends Activity implements SurfaceHolder.Callback, Disp
     static native void nativePad(long buttons, int lx, int ly, int rx, int ry);
     static native void nativePadMode(int pad);
     static native void nativePadGlyph(int glyph);
+    static native int nativeInGame();
 
     private static WeakReference<DmActivity> current = new WeakReference<>(null);
     private static volatile int bootFailure;
@@ -88,6 +89,7 @@ public class DmActivity extends Activity implements SurfaceHolder.Callback, Disp
 
     private SurfaceView view;
     private FrameLayout gameFrame;
+    private YgUpdateButton ygUpdate;
     private TouchOverlay touchOverlay;
     private boolean started;
     private boolean importing, savesTransferred;
@@ -428,6 +430,12 @@ public class DmActivity extends Activity implements SurfaceHolder.Callback, Disp
             camButtons = new CamButtons(this); gameFrame.addView(camButtons, new FrameLayout.LayoutParams(-1, -1)); }
         if (camButtons != null) camButtons.start();
         if (camThreats != null) camThreats.start();
+        if (ygUpdate == null) {
+            float d = getResources().getDisplayMetrics().density;
+            FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams((int) (110 * d), (int) (40 * d), android.view.Gravity.TOP | android.view.Gravity.START);
+            lp.leftMargin = (int) (28 * d); lp.topMargin = (int) (16 * d);
+            ygUpdate = new YgUpdateButton(this); gameFrame.addView(ygUpdate, lp); }
+        ygUpdate.start();
         nativeFocus(3);
     }
 
@@ -549,8 +557,8 @@ public class DmActivity extends Activity implements SurfaceHolder.Callback, Disp
     @Override public void onDisplayAdded(int id) { updateRefresh(); }
     @Override public void onDisplayRemoved(int id) { updateRefresh(); }
     @Override public void onDisplayChanged(int id) { updateRefresh(); }
-    @Override protected void onResume() { super.onResume(); resumed = true; immersive(); startHost(); updateRefresh(); if (started) { nativeFocus(3); if (touchOverlay != null && bootFailure == 0) applyPadMode(PadInput.isPadMode()); if (camSensor != null) camSensor.start(nativeCamSensor()); if (camButtons != null) camButtons.start(); if (camThreats != null) camThreats.start(); } }
-    @Override protected void onPause() { resumed = false; if (camSensor != null) camSensor.stop(); if (camButtons != null) camButtons.stop(); if (camThreats != null) camThreats.stop(); if (inputDialog != null) inputDialog.dismiss(); releaseTouches(); PadInput.reset(); if (touchOverlay != null) touchOverlay.setInputEnabled(false); if (started) nativeFocus(0); super.onPause(); }
+    @Override protected void onResume() { super.onResume(); resumed = true; immersive(); startHost(); updateRefresh(); if (started) { nativeFocus(3); if (touchOverlay != null && bootFailure == 0) applyPadMode(PadInput.isPadMode()); if (camSensor != null) camSensor.start(nativeCamSensor()); if (camButtons != null) camButtons.start(); if (camThreats != null) camThreats.start(); if (ygUpdate != null) ygUpdate.start(); } }
+    @Override protected void onPause() { resumed = false; if (camSensor != null) camSensor.stop(); if (camButtons != null) camButtons.stop(); if (camThreats != null) camThreats.stop(); if (ygUpdate != null) ygUpdate.stop(); if (inputDialog != null) inputDialog.dismiss(); releaseTouches(); PadInput.reset(); if (touchOverlay != null) touchOverlay.setInputEnabled(false); if (started) nativeFocus(0); super.onPause(); }
     @Override protected void onStart() { super.onStart(); if (started) nativeFocus(2); }
     @Override protected void onStop() { if (started) nativeFocus(1); com.xiaoboluo.d2r.widget.HeroWidgetProvider.requestUpdate(this); super.onStop(); }
     @Override protected void onDestroy() { if (displays != null) displays.unregisterDisplayListener(this); if (inputDialog != null) inputDialog.dismiss(); if (current.get() == this) current.clear(); super.onDestroy(); }
