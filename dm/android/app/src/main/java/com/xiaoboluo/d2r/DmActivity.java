@@ -337,9 +337,14 @@ public class DmActivity extends Activity implements SurfaceHolder.Callback, Disp
         if (ygAsking) return;
         ygAsking = true;
         new AlertDialog.Builder(this).setTitle("디아2 엽굵").setCancelable(false)
-            .setItems(new String[]{"일반 플레이", "엽굵 모드로 플레이"}, (d, which) -> {
+            .setItems(new String[]{"일반 플레이", "엽굵 모드로 플레이", "일반 플레이 (저화질·렉 줄이기)", "엽굵 모드 (저화질·렉 줄이기)"}, (d, pick) -> {
                 ygAsking = false;
+                int which = pick % 2;
                 try {
+                    if (pick >= 2) {   // 저화질: 출력 720p(원래 1080p), 3D 해상도 하한 0.5(원래 0.6)
+                        Os.setenv("DM_ANDROID_RES", "720", true);
+                        Os.setenv("DM_3D_SCALE_FLOOR", "0.5", true);
+                    }
                     if (which == 1) {
                         File save = new File(getFilesDir(), "save_yg");
                         save.mkdirs();
