@@ -165,6 +165,7 @@ int dm_custom_get(const char *key); void dm_custom_init(const char *dir);
 static int yg_key_on(const char *k) {
     int yg = getenv("DM_YG") != NULL;
     if (!strcmp(k, "yupgoolg")) return yg;
+    if (!strcmp(k, "ygdrop")) return yg && getenv("DM_YGDROP") != NULL;   // 드랍율 엽굵 모드
     if (yg && !strcmp(k, "item_notes")) return 0;
     return dm_custom_get(k) != 0;
 }

@@ -333,25 +333,34 @@ public class DmActivity extends Activity implements SurfaceHolder.Callback, Disp
     // 엽굵 모드판: 시작할 때 일반 / 엽굵 모드를 고른다. 엽굵 모드는 yupgoolg 덮어쓰기 묶음과 전용 세이브 폴더(save_yg)를 쓴다.
     private int ygMode = -1;
     private boolean ygAsking;
+    private static final String[] YG_MODES = {"오리지널", "엽굵 모드", "드랍율 엽굵 모드"};
     private void askYgMode() {
         if (ygAsking) return;
         ygAsking = true;
-        new AlertDialog.Builder(this).setTitle("디아2 엽굵").setCancelable(false)
-            .setItems(new String[]{"일반 플레이", "엽굵 모드로 플레이", "일반 플레이 (저화질·렉 줄이기)", "엽굵 모드 (저화질·렉 줄이기)"}, (d, pick) -> {
+        final android.widget.CheckBox low = new android.widget.CheckBox(this);
+        low.setText("저화질 (렉 줄이기: 720p, 3D 하한 0.5)");
+        int pad = (int) (20 * getResources().getDisplayMetrics().density);
+        low.setPadding(pad / 2, pad / 2, pad, pad / 2);
+        android.widget.LinearLayout box = new android.widget.LinearLayout(this);
+        box.setPadding(pad, 0, pad, 0);
+        box.addView(low);
+        new AlertDialog.Builder(this).setTitle("디아2 엽굵").setCancelable(false).setView(box)
+            .setItems(YG_MODES, (d, which) -> {
                 ygAsking = false;
-                int which = pick % 2;
                 try {
-                    if (pick >= 2) {   // 저화질: 출력 720p(원래 1080p), 3D 해상도 하한 0.5(원래 0.6)
+                    if (low.isChecked()) {
                         Os.setenv("DM_ANDROID_RES", "720", true);
                         Os.setenv("DM_3D_SCALE_FLOOR", "0.5", true);
                     }
-                    if (which == 1) {
+                    if (which >= 1) {   // 엽굵 모드 둘은 세이브(save_yg)를 같이 쓴다
                         File save = new File(getFilesDir(), "save_yg");
                         save.mkdirs();
                         Os.setenv("DM_YG", "1", true);
                         Os.setenv("DM_SAVE", save.getAbsolutePath(), true);
+                        if (which == 2) Os.setenv("DM_YGDROP", "1", true); else Os.unsetenv("DM_YGDROP");
                     } else {
                         Os.unsetenv("DM_YG");
+                        Os.unsetenv("DM_YGDROP");
                     }
                 } catch (ErrnoException e) { showStartError(getString(R.string.dmAndroidStorage)); return; }
                 ygMode = which;
@@ -443,7 +452,7 @@ public class DmActivity extends Activity implements SurfaceHolder.Callback, Disp
             String dataVer = "없음";
             try { for (String l : new String(java.nio.file.Files.readAllBytes(new File(getFilesDir(), "dm/pack_info.txt").toPath()), "UTF-8").split("\n"))
                     if (l.startsWith("YG=")) dataVer = l.substring(3).trim(); } catch (Exception ignored) { }
-            ygUpdate.setVersion(getString(R.string.ygBuild), dataVer + (ygMode == 1 ? " (엽굵 모드)" : " (일반)")); }
+            ygUpdate.setVersion(getString(R.string.ygBuild), dataVer + " (" + YG_MODES[Math.max(0, ygMode)] + ")"); }
         ygUpdate.start();
         nativeFocus(3);
     }
