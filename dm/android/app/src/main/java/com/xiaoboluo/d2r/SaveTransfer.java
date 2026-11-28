@@ -263,7 +263,11 @@ final class SaveTransfer {
         Files.write(new File(part, SOURCE_FILE).toPath(), (source + "\n").getBytes(StandardCharsets.US_ASCII));
         File parent = to.getParentFile();
         if (parent != null && !parent.isDirectory() && !parent.mkdirs()) throw new IOException("mkdir " + parent.getName());
-        if (!part.renameTo(to)) { deleteTree(part); throw new IOException("rename " + to.getName()); }
+        if (!part.renameTo(to)) {   // 엽굵 모드판: Download 아래 폴더 이름 바꾸기가 막히는 폰이 있어 그대로 복사한 뒤 .part 를 지운다
+            try { copyTree(part, to, new byte[1 << 16]); }
+            catch (IOException e) { deleteTree(part); deleteTree(to); throw new IOException("rename " + to.getName() + " / copy: " + e.getMessage()); }
+            deleteTree(part);
+        }
     }
 
     private static File unused(File f) {
