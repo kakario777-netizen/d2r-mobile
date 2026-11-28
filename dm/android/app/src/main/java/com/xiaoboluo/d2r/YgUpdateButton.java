@@ -20,6 +20,9 @@ final class YgUpdateButton extends View {
     private final Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG), edge = new Paint(Paint.ANTI_ALIAS_FLAG),
             inner = new Paint(Paint.ANTI_ALIAS_FLAG), text = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final RectF box = new RectF();
+    private final Paint small = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private String ver = "";
+    static final float BTN_DP = 40;
     private final float dp;
     private boolean pressed;
     private final Runnable poll = new Runnable() {
@@ -38,18 +41,24 @@ final class YgUpdateButton extends View {
         text.setColor(0xFFC7B377); text.setTextAlign(Paint.Align.CENTER);
         text.setTypeface(Typeface.create(Typeface.SERIF, Typeface.BOLD)); text.setTextSize(15 * dp);
         text.setShadowLayer(2 * dp, 1 * dp, 1 * dp, 0xFF000000);
+        small.setColor(0xFFA89A78); small.setTextAlign(Paint.Align.LEFT); small.setTextSize(11 * dp);
+        small.setShadowLayer(2 * dp, 1 * dp, 1 * dp, 0xFF000000);
         setVisibility(GONE);
     }
+
+    // 화면에 띄우는 버전: 앱 빌드 시각(MMdd-HHmm) + 엽굵 데이터 패치 번호(가져온 pack_info.txt 의 YG= 줄)
+    void setVersion(String app, String data) { ver = "앱 " + app + "  ·  데이터 " + data; invalidate(); }
 
     void start() { removeCallbacks(poll); post(poll); }
     void stop() { removeCallbacks(poll); }
 
     @Override protected void onSizeChanged(int w, int h, int ow, int oh) {
-        fill.setShader(new LinearGradient(0, 0, 0, h, 0xFF2E2822, 0xFF14110E, Shader.TileMode.CLAMP));
+        fill.setShader(new LinearGradient(0, 0, 0, BTN_DP * dp, 0xFF2E2822, 0xFF14110E, Shader.TileMode.CLAMP));
     }
 
     @Override protected void onDraw(Canvas c) {
-        float w = getWidth(), h = getHeight(), r = 3 * dp;
+        float w = 110 * dp, h = BTN_DP * dp, r = 3 * dp;
+        c.drawText(ver, 2 * dp, h + 14 * dp, small);
         box.set(dp, dp, w - dp, h - dp);
         c.drawRoundRect(box, r, r, fill);
         if (pressed) c.drawColor(0x40000000);
@@ -66,7 +75,7 @@ final class YgUpdateButton extends View {
             case MotionEvent.ACTION_CANCEL: pressed = false; invalidate(); return true;
             case MotionEvent.ACTION_UP:
                 pressed = false; invalidate();
-                if (e.getX() >= 0 && e.getY() >= 0 && e.getX() <= getWidth() && e.getY() <= getHeight()) {
+                if (e.getX() >= 0 && e.getY() >= 0 && e.getX() <= 110 * dp && e.getY() <= BTN_DP * dp) {
                     try { getContext().startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(URL))); } catch (Exception ignored) { }
                 }
                 return true;

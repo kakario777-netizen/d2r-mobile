@@ -23,6 +23,10 @@ jobs:
           mkdir -p "$RUNNER_TEMP/gen"
           openssl enc -d -aes-256-cbc -pbkdf2 -in yg/private.tgz.enc -pass env:YG_PASS | tar -xz -C "$RUNNER_TEMP/gen"
           ls "$RUNNER_TEMP/gen"
+      - name: Build tag
+        run: |
+          echo "TAG=yg-$(TZ=Asia/Seoul date +%Y%m%d-%H%M)" >> "$GITHUB_ENV"
+          printf '<?xml version="1.0" encoding="utf-8"?>\n<resources><string name="ygBuild" translatable="false">%s</string></resources>\n' "$(TZ=Asia/Seoul date +%m%d-%H%M)" > dm/android/app/src/main/res/values/yg_build.xml
       - name: Build
         env:
           DM_ANDROID_KEYSTORE: '${{ runner.temp }}/gen/release.p12'
@@ -33,6 +37,6 @@ jobs:
         env: { GH_TOKEN: '${{ github.token }}' }
         run: |
           apk=$(ls dm/android/app/build/outputs/apk/release/*.apk | head -1)
-          tag="yg-$(date -u +%Y%m%d-%H%M)"
+          tag="$TAG"
           cp "$apk" "D2R-yupgoolg.apk"
           gh release create "$tag" D2R-yupgoolg.apk --target "$GITHUB_SHA" --title "엽굵 모드판 $tag" --notes "${{ github.event.head_commit.message }}"

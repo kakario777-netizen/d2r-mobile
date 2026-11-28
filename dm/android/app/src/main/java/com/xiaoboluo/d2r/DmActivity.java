@@ -437,9 +437,13 @@ public class DmActivity extends Activity implements SurfaceHolder.Callback, Disp
         if (camThreats != null) camThreats.start();
         if (ygUpdate == null) {
             float d = getResources().getDisplayMetrics().density;
-            FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams((int) (110 * d), (int) (40 * d), android.view.Gravity.TOP | android.view.Gravity.START);
+            FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams((int) (220 * d), (int) (62 * d), android.view.Gravity.TOP | android.view.Gravity.START);
             lp.leftMargin = (int) (28 * d); lp.topMargin = (int) (16 * d);
-            ygUpdate = new YgUpdateButton(this); gameFrame.addView(ygUpdate, lp); }
+            ygUpdate = new YgUpdateButton(this); gameFrame.addView(ygUpdate, lp);
+            String dataVer = "없음";
+            try { for (String l : new String(java.nio.file.Files.readAllBytes(new File(getFilesDir(), "dm/pack_info.txt").toPath()), "UTF-8").split("\n"))
+                    if (l.startsWith("YG=")) dataVer = l.substring(3).trim(); } catch (Exception ignored) { }
+            ygUpdate.setVersion(getString(R.string.ygBuild), dataVer + (ygMode == 1 ? " (엽굵 모드)" : " (일반)")); }
         ygUpdate.start();
         nativeFocus(3);
     }
