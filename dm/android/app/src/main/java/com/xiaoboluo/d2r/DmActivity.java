@@ -313,8 +313,15 @@ public class DmActivity extends Activity implements SurfaceHolder.Callback, Disp
     // library loads, and the result is told to the player in a toast
     private void transferSaves(File game) {
         String stamp = new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(new Date());
-        for (SaveTransfer.Result r : SaveTransfer.run(game, new File(getFilesDir(), "save"), stamp)) {
-            String where = r.path == null ? null : "Download/S2X/D2R Mobile/" + r.path;
+        // 엽굵 모드판: 엽굵 세이브(save_yg)는 Download/S2X/D2R Mobile/yg/ 폴더의 export 표시·save-import 폴더로 내보내고 가져온다
+        java.util.List<SaveTransfer.Result> all = new java.util.ArrayList<>(SaveTransfer.run(game, new File(getFilesDir(), "save"), stamp));
+        File ygGame = new File(game, "yg");
+        java.util.List<SaveTransfer.Result> yg = new java.util.ArrayList<>();
+        if (ygGame.isDirectory()) { File sy = new File(getFilesDir(), "save_yg"); sy.mkdirs(); yg = SaveTransfer.run(ygGame, sy, stamp); }
+        all.addAll(yg);
+        int nMain = all.size() - yg.size(), idx = 0;
+        for (SaveTransfer.Result r : all) {
+            String where = r.path == null ? null : "Download/S2X/D2R Mobile/" + (idx++ >= nMain ? "yg/" : "") + r.path;
             String text = switch (r.kind) {
                 case SaveTransfer.EXPORTED -> getString(R.string.dmAndroidSaveExported, where);
                 case SaveTransfer.EXPORT_EMPTY -> getString(R.string.dmAndroidSaveExportEmpty);
