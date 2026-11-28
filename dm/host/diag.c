@@ -843,9 +843,11 @@ static void hud_tick(uint64_t G) {        // 每拍：受控玩家等级 / 本�
           // 区域号（levels.txt 的 Id：1 = 罗格营地，2 = 鲜血荒地…）：路径 +0x20 → 所在房间 +0x18 → 区域房间 +0x90 → 区域 +0x1f8
           // Area number (Id in levels.txt: 1 = Rogue Encampment, 2 = Blood Moor...): path +0x20 → current room +0x18 → area room +0x90 → area +0x1f8
           if (pp && tk_rd(pp + 0x20, &r1, 8) && tk_rd(r1 + 0x18, &r2, 8) && tk_rd(r2 + 0x90, &lvl, 8) && tk_rd(lvl + 0x1f8, &no, 4) && no < 200) h.area = (int)no; }
-        if (lv >= 99) h.exp_permille = 1000;
+        static int yg = -1; if (yg < 0) yg = getenv("DM_YG") != NULL;   // 엽굵 모드: 300레벨 경험치 표 | yg mode: 300-level exp table
+        const uint32_t *ke = yg ? k_exp_yg : k_exp; uint32_t kmax = yg ? 300 : 99;
+        if (lv >= kmax) h.exp_permille = 1000;
         else if (lv >= 1) {
-            uint32_t lo = k_exp[lv - 1], hi = k_exp[lv];
+            uint32_t lo = ke[lv - 1], hi = ke[lv];
             h.exp_permille = hi > lo && xp > lo ? (int)((uint64_t)(xp - lo) * 1000 / (hi - lo)) : 0;
             if (h.exp_permille > 1000) h.exp_permille = 1000;
         }
